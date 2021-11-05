@@ -20,7 +20,7 @@ static void *malloc_with_fd(size_t len, int *fd) {
   snprintf(full_path, sizeof(full_path)-1, "/dev/shm/visionbuf_%d_%d", getpid(), offset++);
 #endif
 
-  *fd = open(full_path, O_RDWR | O_CREAT, 0777);
+  *fd = open(full_path, O_RDWR | O_CREAT, 0664);
   assert(*fd >= 0);
 
   unlink(full_path);
@@ -40,6 +40,7 @@ void VisionBuf::allocate(size_t len) {
   this->mmap_len = len;
   this->addr = addr;
   this->fd = fd;
+  this->frame_id = (uint64_t*)((uint8_t*)this->addr + this->len);
 }
 
 void VisionBuf::init_cl(cl_device_id device_id, cl_context ctx){
@@ -57,6 +58,8 @@ void VisionBuf::import(){
   assert(this->fd >= 0);
   this->addr = mmap(NULL, this->mmap_len, PROT_READ | PROT_WRITE, MAP_SHARED, this->fd, 0);
   assert(this->addr != MAP_FAILED);
+
+  this->frame_id = (uint64_t*)((uint8_t*)this->addr + this->len);
 }
 
 
